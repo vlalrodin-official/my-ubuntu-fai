@@ -1,0 +1,3 @@
+#!/bin/sh
+echo "UBUNTU_SERVER CUSTOM"
+exit 0

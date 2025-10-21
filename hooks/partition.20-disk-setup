@@ -1,0 +1,58 @@
+#!/bin/bash
+# Скрипт настройки диска
+disk_setup() {
+    clear
+    echo "================================================"
+    echo "           DISK SETUP CONFIGURATION"
+    echo "================================================"
+    # Показать доступные диски
+    echo "Available disks:"
+    lsblk -d -o NAME,SIZE,TYPE | grep disk
+    echo ""
+    # Выбор диска
+    read -p "Enter disk to install (e.g., sda, vda): " disk
+    # Проверка существования диска
+    if [ ! -b "/dev/$disk" ]; then
+        echo "Error: Disk /dev/$disk does not exist!"
+        sleep 2
+        disk_setup
+        return
+    fi
+    # Выбор файловой системы
+    echo ""
+    echo "Select filesystem:"
+    echo "1) ext4"
+    echo "2) xfs"
+    echo "3) btrfs"
+    read -p "Enter choice (1-3): " fs_choice
+    case $fs_choice in
+        1) filesystem="ext4" ;;
+        2) filesystem="xfs" ;;
+        3) filesystem="btrfs" ;;
+        *) filesystem="ext4" ;;
+    esac
+    # Выбор использования LVM
+    echo ""
+    read -p "Use LVM? (y/n): " use_lvm
+    if [[ $use_lvm =~ ^[Yy]$ ]]; then
+        lvm_enabled=true
+    else
+        lvm_enabled=false
+    fi
+    # Экспорт переменных для FAI
+    export DISK1="/dev/$disk"
+    export FSTYPE1="$filesystem"
+    export VG="fai"
+    if [ "$lvm_enabled" = true ]; then
+        export VOLUME1="pv /dev/$disk"
+        export VOLUME2="vg fai"
+        export VOLUME3="lv root 10G $filesystem"
+        export VOLUME4="lv swap 2G swap"
+    else
+        export VOLUME1="primary id=83 bootable size=100% $filesystem mount=/"
+        export VOLUME2="primary id=82 size=2G swap"
+    fi
+    echo "Disk configuration saved."
+    sleep 2
+}
+disk_setup

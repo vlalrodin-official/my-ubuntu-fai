@@ -1,0 +1,43 @@
+#!/bin/bash
+# Скрипт настройки сети
+network_setup() {
+    clear
+    echo "================================================"
+    echo "           NETWORK CONFIGURATION"
+    echo "================================================"
+    # Показать доступные сетевые интерфейсы
+    echo "Available network interfaces:"
+    ip link show | grep -E "^[0-9]+:" | awk -F: '{print $2}' | tr -d ' '
+    echo ""
+    # Выбор интерфейса
+    read -p "Enter network interface (e.g., eth0, ens18): " interface
+    # Настройка IP
+    echo ""
+    read -p "Enter IP address (e.g., 192.168.1.100): " ip_address
+    read -p "Enter netmask (e.g., 255.255.255.0): " netmask
+    read -p "Enter gateway (e.g., 192.168.1.1): " gateway
+    read -p "Enter DNS servers (e.g., 8.8.8.8,1.1.1.1): " dns_servers
+    read -p "Enter hostname: " hostname
+    # Применение hostname
+    echo "$hostname" > /target/etc/hostname
+    # Генерация netplan конфигурации
+    mkdir -p /target/etc/netplan
+    cat > /target/etc/netplan/01-netcfg.yaml << EOF
+network:
+  version: 2
+  renderer: networkd
+  ethernets:
+    $interface:
+      dhcp4: no
+      addresses:
+        - $ip_address/${netmask##*.}  # Преобразование маски в CIDR (упрощённо для /24 etc.)
+      routes:
+        - to: default
+          via: $gateway
+      nameservers:
+        addresses: [$dns_servers]
+EOF
+    echo "Network configuration saved."
+    sleep 2
+}
+network_setup

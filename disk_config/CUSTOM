@@ -1,0 +1,3 @@
+disk_config $DISK1
+$VOLUME1
+$VOLUME2
